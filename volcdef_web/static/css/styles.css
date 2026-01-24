@@ -1,0 +1,196 @@
+:root {
+    --main-bg-color: #333;
+    --main-font: 'Montserrat';
+    --header-height: 100px;
+    --footer-height: 50px;
+}
+
+body {
+    margin: 0;
+    font-family: var(--main-font);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: var(--main-bg-color);
+}
+
+main {
+    flex: 1;
+    background-color: white;
+}
+
+
+header {
+    width: 100%;
+    height: var(--header-height);
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+}
+
+.header-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 80%;
+}
+
+.title-and-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+h1 {
+    margin: 0;
+}
+
+.navbar.active {
+    display: flex;
+}
+
+.navbar-nav {
+    margin: 0;
+    padding: 0;
+}
+
+.nav-item {
+    display: inline-block;
+}
+
+.nav-link {
+    color: white;
+    text-decoration: none;
+    padding: 10px 15px;
+}
+
+.nav-link:hover {
+    background-color: #555;
+}
+
+#navbar-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5em;
+    cursor: pointer;
+}
+
+#um-logo {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+}
+
+#um-logo img {
+    height: 40px;
+}
+
+#map {
+    height: calc(100vh - var(--header-height) - var(--footer-height));
+    z-index: 2;
+}
+
+.text-box {
+    /* position: absolute; */
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    min-height: calc(100% - var(--header-height) - var(--footer-height));
+    width: 90%;
+    max-width: 900px;
+    margin: auto;
+}
+
+
+footer {
+    height: var(--footer-height);
+    width: 100%;
+    background-color: var(--main-bg-color);
+    color: white;
+    text-align: center;
+    bottom: 0;
+    margin-top: auto;
+}
+
+.footer-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.footer-content p {
+    margin: 0;
+    padding: 0;
+}
+
+#github-logo img {
+    height: 24px;
+    width: auto;
+    margin-left: 5px;
+}
+
+@media (max-width: 1000px) {
+    #um-logo {
+        display: none;
+    }
+}
+
+@media (max-width: 850px) or (max-height: 500px) {
+    :root {
+        --header-height: 50px;
+    }
+
+    #map {
+        height: calc(100vh - var(--header-height));
+    }
+
+    #um-logo {
+        display: none;
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: end;
+    }
+
+    .title-and-toggle {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .navbar {
+        position: fixed;
+        top: var(--header-height);
+        background-color: var(--main-bg-color);
+        /* Ensure it appears above other content */
+        display: none;
+        z-index: 3;
+        /* Hide initially on small screens */
+    }
+
+    .navbar.active {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #navbar-toggle {
+        display: block;
+    }
+
+    .navbar {
+        display: none;
+    }
+
+    .nav-item {
+        display: grid;
+        justify-content: right;
+    }
+}
