@@ -46,7 +46,7 @@
             "elevation": 1130,
             "dominant_rock_type": "Basalt / Picro-Basalt",
             "tectonic_setting": "Rift zone / Oceanic crust (< 15 km)",
-            "volcdef_link": "http://149.165.154.65/data/HDF5EOS/Alcedo/miaplpy"
+            "volcdef_link": "\u00a0http://149.165.154.65/data/HDF5EOS/Alcedo/miaplpy"
         },
         {
             "id": 353050,
