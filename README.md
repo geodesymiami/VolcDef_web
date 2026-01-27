@@ -1,4 +1,4 @@
-# Rain rain go away
+# Volcano deformation
 Flask based website to display University of Miami geodesylab volcano displacelemt timeseries data.
 
 ## Installation
