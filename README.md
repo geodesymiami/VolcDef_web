@@ -6,7 +6,7 @@ Flask based website to display University of Miami geodesylab volcano displacele
 ```
 git clone git@github.com:geodesymiami/VolcDef_web
 ```
-If cloned into the $MINSAR_HOME/tools directory create a symbilic link:
+(preferred), or if cloned into the $MINSAR_HOME/tools directory create a symbilic link:
 ```
 sudo ln -s /home/exouser/code/minsar/tools/VolcDef_web /var/www
 ```
