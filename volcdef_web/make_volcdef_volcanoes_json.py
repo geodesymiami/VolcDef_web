@@ -7,25 +7,46 @@ import json
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Creates a volcanoes.json file for the VolcDef website based on a Holocene_volcanoes.xls file.'
+        description='Creates volcanoes_volcdef.json for the VolcDef website from Holocene_volcanoes.xlsx file.'
     )
-    
-    # Get the default path: one directory up from the script location
+
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    default_file = os.path.join(os.path.dirname(script_dir), 'Holocene_Volcanoes_volcdef_cfg.xlsx')
-    
+
+    # Set default input file: $MINSAR_HOME/webconfig/Holocene_Volcanoes_volcdef_cfg.xlsx or fallback
+    default_input = None
+    if 'MINSAR_HOME' in os.environ:
+        minsar_input = os.path.join(os.environ['MINSAR_HOME'], 'webconfig', 'Holocene_Volcanoes_volcdef_cfg.xlsx')
+        if os.path.exists(minsar_input):
+            default_input = minsar_input
+    if default_input is None:
+        default_input = os.path.join(os.path.dirname(script_dir), 'Holocene_Volcanoes_volcdef_cfg.xlsx')
+
+    # Set default output directory: $MINSAR_HOME/webconfig or current directory
+    default_outdir = os.environ.get('MINSAR_HOME')
+    if default_outdir:
+        default_outdir = os.path.join(default_outdir, 'webconfig')
+    else:
+        default_outdir = '.'
+
     parser.add_argument(
         'input_file',
         nargs='?',
-        default=default_file,
-        help='Path to the Holocene_volcanoes Excel file (default: VolcDef_web/Holocene_Volcanoes_volcdef_cfg.xlsx)'
+        default=default_input,
+        help='Path to input Excel file (default: $MINSAR_HOME/webconfig/Holocene_Volcanoes_volcdef_cfg.xlsx)'
     )
     
+    parser.add_argument(
+        '--outdir',
+        default=default_outdir,
+        help='Output directory (default: $MINSAR_HOME/webconfig or current directory)'
+    )
+
     args = parser.parse_args()
-    
+
     FILE_PATH = args.input_file
     print(f'Reading {FILE_PATH} ...')
     df = pd.read_excel(FILE_PATH, skiprows=1)
+
 
     # Process the DataFrame to create a list of volcano dictionaries
     volcanoes = []
@@ -34,7 +55,7 @@ def main():
         volcdef_link = row['VolcDef']
         if isinstance(volcdef_link, str):
             volcdef_link = volcdef_link.strip().replace('\u00a0', '')
-        
+
         volcano = {
             'id': row['Volcano Number'],
             'name': row['Volcano Name'],
@@ -80,33 +101,33 @@ def main():
     # Handle duplicate volcano entries
     # Track how many times we've seen each volcano name
     volcano_name_count = {}
-    
+
     for volcano in volcanoes:
         name = volcano['name']
-        
+
         # Check if this is a duplicate
         if name in volcano_name_count:
             # This is the second (or later) occurrence
-            # Subtract 0.001 from latitude to offset the marker
-            volcano['latitude'] -= 0.001
-            
+            # Subtract 0.01 from latitude to offset the marker
+            volcano['latitude'] -= 0.01
+
             # Extract processing method from URL (miaplpy or mintpy)
             url = volcano['volcdef_link']
             if 'miaplpy' in url:
                 volcano['name'] = f"{name} (miaplpy)"
             elif 'mintpy' in url:
                 volcano['name'] = f"{name} (mintpy)"
-            
+
             print(f"Duplicate found: {name} -> {volcano['name']}, adjusted latitude to {volcano['latitude']}")
-        
+
         # Increment the count for this volcano name
         volcano_name_count[name] = volcano_name_count.get(name, 0) + 1
 
-    # move the json file to the data directory
-    # Write the JSON data to a file
-    json_file = 'data/volcanoes.json'
-    with open(json_file, 'w') as json_file:
-        json.dump(volcano_data, json_file, indent=4)
+    # Write JSON to output directory
+    os.makedirs(args.outdir, exist_ok=True)
+    json_file = os.path.join(args.outdir, 'volcanoes_volcdef.json')
+    with open(json_file, 'w') as f:
+        json.dump(volcano_data, f, indent=4)
 
     print(f'JSON file created: {json_file}')
 

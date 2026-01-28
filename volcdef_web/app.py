@@ -24,12 +24,22 @@ MAPBOX_ACCESS_TOKEN = load_mapbox_token()
 
 VOLCDEF_WEB_HOME = os.getenv('VOLCDEF_WEB_HOME', os.path.dirname(__file__))
 
+# Find volcanoes JSON file: $MINSAR_HOME/webconfig or local data directory
+def get_volcanoes_json_path():
+    minsar_home = os.getenv('MINSAR_HOME')
+    if minsar_home:
+        minsar_json = os.path.join(minsar_home, 'webconfig', 'volcanoes_volcdef.json')
+        if os.path.exists(minsar_json):
+            return minsar_json
+    return os.path.join(VOLCDEF_WEB_HOME, 'data', 'volcanoes_volcdef.json')
+
 @app.route('/')
 def index():
     return render_template('index.html', mapbox_access_token=MAPBOX_ACCESS_TOKEN)
 
-# Load volcano data
-with open(f'{VOLCDEF_WEB_HOME}/data/volcanoes.json') as f:
+# Load volcano data from determined path
+volcanoes_json_path = get_volcanoes_json_path()
+with open(volcanoes_json_path) as f:
     volcanoes = json.load(f)['volcanoes']
 
 @app.route('/api/volcanoes')
