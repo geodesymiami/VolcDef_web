@@ -30,6 +30,11 @@ def main():
     # Process the DataFrame to create a list of volcano dictionaries
     volcanoes = []
     for _, row in df.iterrows():
+        # Clean the VolcDef link by removing leading/trailing whitespace including non-breaking spaces
+        volcdef_link = row['VolcDef']
+        if isinstance(volcdef_link, str):
+            volcdef_link = volcdef_link.strip().replace('\u00a0', '')
+        
         volcano = {
             'id': row['Volcano Number'],
             'name': row['Volcano Name'],
@@ -44,7 +49,7 @@ def main():
             'elevation': row['Elevation (m)'],
             'dominant_rock_type': row['Dominant Rock Type'],
             'tectonic_setting': row['Tectonic Setting'],
-            'volcdef_link': row['VolcDef']
+            'volcdef_link': volcdef_link
         }
         volcanoes.append(volcano)
 
@@ -71,6 +76,31 @@ def main():
             name = name.split(',')[::-1]
             name = [part.strip() for part in name]
             volcano['name'] = ' '.join(name)
+
+    # Handle duplicate volcano entries
+    # Track how many times we've seen each volcano name
+    volcano_name_count = {}
+    
+    for volcano in volcanoes:
+        name = volcano['name']
+        
+        # Check if this is a duplicate
+        if name in volcano_name_count:
+            # This is the second (or later) occurrence
+            # Subtract 0.001 from latitude to offset the marker
+            volcano['latitude'] -= 0.001
+            
+            # Extract processing method from URL (miaplpy or mintpy)
+            url = volcano['volcdef_link']
+            if 'miaplpy' in url:
+                volcano['name'] = f"{name} (miaplpy)"
+            elif 'mintpy' in url:
+                volcano['name'] = f"{name} (mintpy)"
+            
+            print(f"Duplicate found: {name} -> {volcano['name']}, adjusted latitude to {volcano['latitude']}")
+        
+        # Increment the count for this volcano name
+        volcano_name_count[name] = volcano_name_count.get(name, 0) + 1
 
     # move the json file to the data directory
     # Write the JSON data to a file

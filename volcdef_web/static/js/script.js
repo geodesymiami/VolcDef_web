@@ -44,9 +44,9 @@ fetch('/api/volcanoes')
       // Add the wrapper div to the map
       map.getCanvasContainer().appendChild(wrapperDiv);
 
-      // Add click event to redirect to volcano detail page
+      // Add click event to open volcano detail page in a new tab
       wrapperDiv.addEventListener('click', () => {
-        window.location.href = volcano.volcdef_link;
+        window.open(volcano.volcdef_link, '_blank');
       });
 
       // Add hover events to show the name of the volcano
