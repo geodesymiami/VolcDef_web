@@ -1,15 +1,15 @@
 mapboxgl.accessToken = mapboxAccessToken;
 
-// Initialize the Mapbox map
+// Default view: entire world (same approach as Precip_web). center + zoom set the initial view.
+// zoom 0 = whole world; center [0, 20] keeps the map well-framed.
 var map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/mapbox/satellite-v9',
-  center: [-85.217857,-0.392329],
-  zoom: 5,
-  minZoom: 1,
+  center: [0, 20],
+  zoom: 0,
+  minZoom: 0,
   maxZoom: 18,
-  maxBounds: [[-180, -85], [180, 85]] // Constrain the map to this area
-
+  maxBounds: [[-180, -85], [180, 85]]
 });
 
 // Create a single popup instance to reuse for hover
