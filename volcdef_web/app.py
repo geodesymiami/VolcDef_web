@@ -24,13 +24,24 @@ MAPBOX_ACCESS_TOKEN = load_mapbox_token()
 
 VOLCDEF_WEB_HOME = os.getenv('VOLCDEF_WEB_HOME', os.path.dirname(__file__))
 
-# Find volcanoes JSON file: $MINSAR_HOME/webconfig or local data directory
+# Find volcanoes.json: sibling webconfig (same parent as VolcDef_web), then WEBCONFIG_DIR, then bundled data
 def get_volcanoes_json_path():
-    minsar_home = os.getenv('MINSAR_HOME')
-    if minsar_home:
-        minsar_json = os.path.join(minsar_home, 'webconfig', 'volcanoes_volcdef.json')
-        if os.path.exists(minsar_json):
-            return minsar_json
+    # Sibling webconfig dir (webconfig and VolcDef_web share the same parent)
+    parent_of_volcdef = os.path.dirname(APP_DIR)
+    shared_parent = os.path.dirname(parent_of_volcdef)
+    sibling_webconfig = os.path.join(shared_parent, 'webconfig')
+    sibling_json = os.path.join(sibling_webconfig, 'volcanoes.json')
+    if os.path.exists(sibling_json):
+        return sibling_json
+    webconfig_dir = os.getenv('WEBCONFIG_DIR')
+    if webconfig_dir:
+        path = os.path.join(webconfig_dir, 'volcanoes.json')
+        if os.path.exists(path):
+            return path
+    # Bundled data: volcanoes.json or fallback to volcanoes_volcdef.json
+    bundled = os.path.join(VOLCDEF_WEB_HOME, 'data', 'volcanoes.json')
+    if os.path.exists(bundled):
+        return bundled
     return os.path.join(VOLCDEF_WEB_HOME, 'data', 'volcanoes_volcdef.json')
 
 @app.route('/')

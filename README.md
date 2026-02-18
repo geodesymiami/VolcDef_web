@@ -18,6 +18,13 @@ pip install -r requirements.txt
 ```
 3. Make sure the MAPBOX_ACCESS_TOKEN is set in `mapbox_access_token.env`. It will use `~accounts/mapbox_access_token.env` by default if it exists.
 
+4. **Volcano list (production)**  
+   The app reads the volcano list from, in order: **sibling webconfig** (same parent dir as VolcDef_web) `volcanoes.json`, then `WEBCONFIG_DIR/volcanoes.json` if set, else `volcdef_web/data/volcanoes.json` or `volcanoes_volcdef.json`. Paths are relative; no `MINSAR_HOME` required.  
+   In production, set `WEBCONFIG_DIR` to the webconfig directory (e.g. `/var/www/webconfig`) so a single shared config is used. The bundled `volcdef_web.conf` sets `SetEnv WEBCONFIG_DIR /var/www/webconfig`.  
+   To update the list: run `make_volcdef_volcanoes_json.py`; it reads the xlsx from the sibling webconfig (or VolcDef_web repo) and writes `volcanoes.json` to the current directory by default, or use `--outdir`, e.g.  
+   `make_volcdef_volcanoes_json.py /path/to/Holocene_Volcanoes_volcdef_cfg.xlsx --outdir /var/www/webconfig`  
+   No manual copy into VolcDef_web is needed when using WEBCONFIG_DIR.
+
 5. Run the website
 ```
 cd precip_web/

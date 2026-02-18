@@ -7,38 +7,33 @@ import json
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Creates volcanoes_volcdef.json for the VolcDef website from Holocene_volcanoes.xlsx file.'
+        description='Creates volcanoes.json for the VolcDef website from Holocene_volcanoes xlsx. '
+                    'Reads from sibling webconfig dir if present, else VolcDef_web repo. Writes to current directory by default.'
     )
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Sibling of VolcDef_web (webconfig and VolcDef_web share the same parent)
+    parent_of_volcdef = os.path.dirname(script_dir)
+    shared_parent = os.path.dirname(parent_of_volcdef)
+    sibling_webconfig = os.path.join(shared_parent, 'webconfig')
 
-    # Set default input file: $MINSAR_HOME/webconfig/Holocene_Volcanoes_volcdef_cfg.xlsx or fallback
-    default_input = None
-    if 'MINSAR_HOME' in os.environ:
-        minsar_input = os.path.join(os.environ['MINSAR_HOME'], 'webconfig', 'Holocene_Volcanoes_volcdef_cfg.xlsx')
-        if os.path.exists(minsar_input):
-            default_input = minsar_input
-    if default_input is None:
-        default_input = os.path.join(os.path.dirname(script_dir), 'Holocene_Volcanoes_volcdef_cfg.xlsx')
-
-    # Set default output directory: $MINSAR_HOME/webconfig or current directory
-    default_outdir = os.environ.get('MINSAR_HOME')
-    if default_outdir:
-        default_outdir = os.path.join(default_outdir, 'webconfig')
+    # Default input: sibling webconfig/Holocene_Volcanoes_volcdef_cfg.xlsx if exists, else VolcDef_web repo
+    sibling_xlsx = os.path.join(sibling_webconfig, 'Holocene_Volcanoes_volcdef_cfg.xlsx')
+    if os.path.exists(sibling_xlsx):
+        default_input = sibling_xlsx
     else:
-        default_outdir = '.'
+        default_input = os.path.join(parent_of_volcdef, 'Holocene_Volcanoes_volcdef_cfg.xlsx')
 
     parser.add_argument(
         'input_file',
         nargs='?',
         default=default_input,
-        help='Path to input Excel file (default: $MINSAR_HOME/webconfig/Holocene_Volcanoes_volcdef_cfg.xlsx)'
+        help='Path to input Excel file (default: sibling webconfig/ or VolcDef_web/Holocene_Volcanoes_volcdef_cfg.xlsx)'
     )
-    
     parser.add_argument(
         '--outdir',
-        default=default_outdir,
-        help='Output directory (default: $MINSAR_HOME/webconfig or current directory)'
+        default='.',
+        help='Output directory for volcanoes.json (default: current directory)'
     )
 
     args = parser.parse_args()
@@ -125,7 +120,7 @@ def main():
 
     # Write JSON to output directory
     os.makedirs(args.outdir, exist_ok=True)
-    json_file = os.path.join(args.outdir, 'volcanoes_volcdef.json')
+    json_file = os.path.join(args.outdir, 'volcanoes.json')
     with open(json_file, 'w') as f:
         json.dump(volcano_data, f, indent=4)
 
