@@ -10,24 +10,22 @@ git clone git@github.com:geodesymiami/VolcDef_web
 ```
 sudo ln -s /home/exouser/code/minsar/tools/VolcDef_web /var/www
 ```
-2. Install the required packages into an virtual environment:
+2. In the VolcDef_web dir, install the required packages into a virtual environment:
 ```
 python -m venv web_env
 source web_env/bin/activate
 pip install -r requirements.txt
 ```
-3. Make sure the MAPBOX_ACCESS_TOKEN is set in `mapbox_access_token.env`. It will use `~accounts/mapbox_access_token.env` by default if it exists.
+3. Make sure the MAPBOX_ACCESS_TOKEN is set in `mapbox_access_token.env` (or `cp ~/accounts/mapbox_access_token.env .`).
 
 4. **Volcano list (production)**  
-   The app reads the volcano list from, in order: **sibling webconfig** (same parent dir as VolcDef_web) `volcanoes.json`, then `WEBCONFIG_DIR/volcanoes.json` if set, else `volcdef_web/data/volcanoes.json` or `volcanoes_volcdef.json`. Paths are relative; no `MINSAR_HOME` required.  
-   In production, set `WEBCONFIG_DIR` to the webconfig directory (e.g. `/var/www/webconfig`) so a single shared config is used. The bundled `volcdef_web.conf` sets `SetEnv WEBCONFIG_DIR /var/www/webconfig`.  
-   To update the list: run `make_volcdef_volcanoes_json.py`; it reads the xlsx from the sibling webconfig (or VolcDef_web repo) and writes `volcanoes.json` to the current directory by default, or use `--outdir`, e.g.  
-   `make_volcdef_volcanoes_json.py /path/to/Holocene_Volcanoes_volcdef_cfg.xlsx --outdir /var/www/webconfig`  
-   No manual copy into VolcDef_web is needed when using WEBCONFIG_DIR.
+   The app reads `volcanoes.json` (the volcano list) from (in this order): **sibling webconfig** (same parent dir as VolcDef_web) ,  `WEBCONFIG_DIR/volcanoes.json` (if set),  `volcdef_web/data/volcanoes.json` or `volcanoes_volcdef.json`. Paths are relative; no `MINSAR_HOME` is required.  
+   In production, set `WEBCONFIG_DIR` to the webconfig directory (e.g. `/var/www/webconfig`) so a single shared config is used (`volcdef_web.conf` sets `SetEnv WEBCONFIG_DIR /var/www/webconfig`).  
+   To update the volcano list, go to `/var/www/webconfig` and run `make_volcdef_volcanoes_json.py` (without arguments). it reads Holocene*.xlsx and writes `volcanoes.json` into the current directory (alternatively: `make_volcdef_volcanoes_json.py /path/to/Holocene_Volcanoes_volcdef_cfg.xlsx --outdir /var/www/webconfig`)
 
 5. Run the website
 ```
-cd precip_web/
+cd volcdef_web/
 python run.py
 ```
 6. Open Website at the given address (chrome/safari)
@@ -38,7 +36,7 @@ or check using
 ```
 curl -s http://127.0.0.1:5000
 ```
-7. On a remote server, to configure Apache create `/etc/apache2/sites-available/volcdef_web.conf` containing
+7. On a remote server, to configure Apache copy volcdef_web.conf to /etc/apache2/sites-available/ (`sudo cp volcdef_web.conf /etc/apache2/sites-available/`. It contains
 ```
 <VirtualHost *:80>
 
@@ -71,10 +69,7 @@ curl -s http://127.0.0.1:5000
     CustomLog ${APACHE_LOG_DIR}/precip_web_access.log combined
 </VirtualHost>
 ```
-or
-```
-sudo cp volcdef_web.conf /etc/apache2/sites-available/
-```
+
 8. Start Apache using:
 ```
 sudo a2ensite volcdef_web.conf
