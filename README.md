@@ -1,5 +1,5 @@
 # Volcano deformation
-Flask based website to display University of Miami geodesylab volcano displacelemt timeseries data.
+Flask based website to display University of Miami geodesylab volcano displacement timeseries data.
 
 ## Installation
 1. Go to `/var/www/` and clone the repository:
