@@ -7,6 +7,7 @@ app = Flask(__name__)
 APP_DIR = os.path.dirname(__file__)
 
 TOKEN_FILE = os.path.join( os.path.dirname(APP_DIR), "mapbox_access_token.env")
+print("TOKEN_FILE:",TOKEN_FILE)
 
 def load_mapbox_token():
 
@@ -14,6 +15,7 @@ def load_mapbox_token():
     with open(TOKEN_FILE, "r") as f:
         exec(f.read(), namespace)
     token = namespace.get("mapbox_access_token", "").strip()
+    print("token:",token)
 
     if not token or "YourTokenHere" in token:
         raise RuntimeError( "MAPBOX access token not set (still placeholder)")
