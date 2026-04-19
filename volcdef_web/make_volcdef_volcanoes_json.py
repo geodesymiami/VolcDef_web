@@ -8,7 +8,10 @@ import json
 def main():
     parser = argparse.ArgumentParser(
         description='Creates volcanoes.json for the VolcDef website from Holocene_volcanoes xlsx. '
-                    'Reads from sibling webconfig dir if present, else VolcDef_web repo. Writes to current directory by default.'
+                    'Reads from sibling webconfig dir if present, else VolcDef_web repo. Writes to current directory by default.',
+        epilog='Example (deploy where the Flask app reads volcanoes.json): '
+               'python3 make_volcdef_volcanoes_json.py --outdir /var/www/webconfig',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -33,7 +36,7 @@ def main():
     parser.add_argument(
         '--outdir',
         default='.',
-        help='Output directory for volcanoes.json (default: current directory)'
+        help='Directory to write volcanoes.json (default: current working directory, not webconfig unless you pass it)'
     )
 
     args = parser.parse_args()
@@ -67,6 +70,12 @@ def main():
             'tectonic_setting': row['Tectonic Setting'],
             'volcdef_link': volcdef_link
         }
+        # Landslides are identified in Excel by Primary Volcano Type == "Landslide" (stored as type).
+        ptype = volcano['type']
+        if ptype is not None and not (isinstance(ptype, float) and pd.isna(ptype)):
+            volcano['Landslide'] = str(ptype).strip().lower() == 'landslide'
+        else:
+            volcano['Landslide'] = False
         volcanoes.append(volcano)
 
     print(df['VolcDef'].value_counts())
@@ -124,7 +133,10 @@ def main():
     with open(json_file, 'w') as f:
         json.dump(volcano_data, f, indent=4)
 
-    print(f'JSON file created: {json_file}')
+    json_abs = os.path.abspath(json_file)
+    print(f'JSON file created: {json_abs}')
+    if args.outdir == '.' or os.path.abspath(args.outdir) == os.getcwd():
+        print('(Written under your current working directory; use --outdir /var/www/webconfig to install for the site.)')
 
 
 if __name__ == '__main__':

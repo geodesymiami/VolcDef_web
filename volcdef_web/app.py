@@ -3,6 +3,39 @@ import json
 import os
 
 app = Flask(__name__)
+
+
+def _is_landslide(entry):
+    """True if this record is a landslide case (sorted last on list/map).
+
+    Primary rule: Holocene / volcanoes.json uses ``type`` from Excel column
+    ``Primary Volcano Type``; landslide entries are labeled ``Landslide`` there.
+    Optional explicit ``Landslide`` boolean in JSON still supported.
+    """
+    ptype = entry.get("type") or entry.get("Primary Volcano Type")
+    if ptype is not None and not (isinstance(ptype, float) and ptype != ptype):  # not NaN
+        if str(ptype).strip().lower() == "landslide":
+            return True
+
+    val = entry.get("Landslide")
+    if val is None:
+        val = entry.get("landslide")
+    if val is None:
+        return False
+    if isinstance(val, bool):
+        return val
+    if isinstance(val, (int, float)):
+        return val != 0
+    s = str(val).strip().lower()
+    return s in ("true", "yes", "1", "y")
+
+
+def _sort_volcanoes_for_display(volcanoes):
+    """Non-landslides first (by name), then landslides (by name)."""
+    return sorted(
+        volcanoes,
+        key=lambda v: (_is_landslide(v), str(v.get("name") or "").lower()),
+    )
 # Read Mapbox access token from environment variable
 APP_DIR = os.path.dirname(__file__)
 
@@ -53,7 +86,7 @@ def index():
 # Load volcano data from determined path
 volcanoes_json_path = get_volcanoes_json_path()
 with open(volcanoes_json_path) as f:
-    volcanoes = json.load(f)['volcanoes']
+    volcanoes = _sort_volcanoes_for_display(json.load(f)["volcanoes"])
 
 @app.route('/api/volcanoes')
 def get_volcanoes():
