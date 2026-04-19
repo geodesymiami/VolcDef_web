@@ -7,18 +7,14 @@
     <thead>
         <tr>
             <th>Name</th>
-            <th>Dominant Rock Type</th>
             <th>Country</th>
-            <th>Region</th>
         </tr>
     </thead>
     <tbody>
         {% for volcano in volcanoes %}
             <tr>
                 <td><a href="{{ volcano.volcdef_link }}">{{ volcano.name }}</a></td>
-                <td>{{ volcano.dominant_rock_type }}</td>
                 <td>{{ volcano.country }}</td>
-                <td>{{ volcano.region }}</td>
             </tr>
         {% endfor %}
     </tbody>
