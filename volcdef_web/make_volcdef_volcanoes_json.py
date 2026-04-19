@@ -42,7 +42,7 @@ def main():
     args = parser.parse_args()
 
     FILE_PATH = args.input_file
-    print(f'Reading {FILE_PATH} ...')
+    print(f'Reading {os.path.abspath(FILE_PATH)}')
     df = pd.read_excel(FILE_PATH, skiprows=1)
 
 
@@ -78,21 +78,12 @@ def main():
             volcano['Landslide'] = False
         volcanoes.append(volcano)
 
-    print(df['VolcDef'].value_counts())
-
-    print('# of volcanoes:', len(volcanoes))
-    # remove volcanoes with precip != False
+    # remove rows without a VolcDef link
     volcanoes = [volcano for volcano in volcanoes if volcano['volcdef_link'] != False]
-    print('# of volcanoes with VolcDef:', len(volcanoes))
-    # Create the final JSON structure
+    # Create the final JSON structure (same list object is updated below before dump)
     volcano_data = {
         'volcanoes': volcanoes
     }
-
-
-    print()
-    print(volcanoes[0])
-
 
     # fix name if it has a comma
     for volcano in volcanoes:
@@ -122,10 +113,11 @@ def main():
             elif 'mintpy' in url:
                 volcano['name'] = f"{name} (mintpy)"
 
-            print(f"Duplicate found: {name} -> {volcano['name']}, adjusted latitude to {volcano['latitude']}")
-
         # Increment the count for this volcano name
         volcano_name_count[name] = volcano_name_count.get(name, 0) + 1
+
+    for volcano in volcanoes:
+        print(f"{volcano['name']}\t{volcano['volcdef_link']}")
 
     # Write JSON to output directory
     os.makedirs(args.outdir, exist_ok=True)
