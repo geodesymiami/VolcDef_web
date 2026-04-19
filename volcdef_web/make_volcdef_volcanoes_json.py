@@ -7,9 +7,9 @@ import json
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Creates volcanoes.json for the VolcDef website from Holocene_volcanoes xlsx. '
+        description='Creates volcanoes_volcdef.json for the VolcDef website from Holocene_volcanoes xlsx. '
                     'Reads from sibling webconfig dir if present, else VolcDef_web repo. Writes to current directory by default.',
-        epilog='Example (deploy where the Flask app reads volcanoes.json): '
+        epilog='Example (deploy where the Flask app reads volcanoes_volcdef.json): '
                'python3 make_volcdef_volcanoes_json.py --outdir /var/www/webconfig',
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -36,7 +36,7 @@ def main():
     parser.add_argument(
         '--outdir',
         default='.',
-        help='Directory to write volcanoes.json (default: current working directory, not webconfig unless you pass it)'
+        help='Directory to write volcanoes_volcdef.json (default: current working directory, not webconfig unless you pass it)'
     )
 
     args = parser.parse_args()
@@ -121,7 +121,7 @@ def main():
 
     # Write JSON to output directory
     os.makedirs(args.outdir, exist_ok=True)
-    json_file = os.path.join(args.outdir, 'volcanoes.json')
+    json_file = os.path.join(args.outdir, 'volcanoes_volcdef.json')
     with open(json_file, 'w') as f:
         json.dump(volcano_data, f, indent=4)
 
