@@ -1,6 +1,23 @@
 # Volcano deformation
 Flask based website to display University of Miami geodesylab volcano displacement timeseries data.
 
+## Repository copy vs production on the server
+
+| Location | Role |
+|----------|------|
+| **`$MINSAR_HOME/tools/VolcDef_web`** (this repo) | Where you edit code in development (e.g. under `minsar/tools/VolcDef_web`). |
+| **`/var/www/VolcDef_web`** | **What Apache/WSGI actually runs** (`web.wsgi`, `volcdef_web/app.py`, `web_env`). |
+
+Changes made in the MinSAR repo are **not** live until you **deploy** them to `/var/www/VolcDef_web`, for example:
+
+```bash
+# Example: sync Python package (adjust host/user as needed)
+sudo rsync -a --delete /path/to/minsar/tools/VolcDef_web/volcdef_web/ /var/www/VolcDef_web/volcdef_web/
+sudo systemctl reload apache2
+```
+
+Or maintain `/var/www/VolcDef_web` as a `git clone` / `git pull` of [VolcDef_web](https://github.com/geodesymiami/VolcDef_web) and pull on the server after merging changes from the minsar copy.
+
 ## Installation
 1. Go to `/var/www/` and clone the repository:
 ```
@@ -19,9 +36,9 @@ pip install -r requirements.txt
 3. Make sure the MAPBOX_ACCESS_TOKEN is set in `mapbox_access_token.env` (or `cp ~/accounts/mapbox_access_token.env .`).
 
 4. **Volcano list (production)**  
-   The app reads `volcanoes.json` (the volcano list) from (in this order): **sibling webconfig** (same parent dir as VolcDef_web) ,  `WEBCONFIG_DIR/volcanoes.json` (if set),  `volcdef_web/data/volcanoes.json` or `volcanoes_volcdef.json`. Paths are relative; no `MINSAR_HOME` is required.  
-   In production, set `WEBCONFIG_DIR` to the webconfig directory (e.g. `/var/www/webconfig`) so a single shared config is used (`volcdef_web.conf` sets `SetEnv WEBCONFIG_DIR /var/www/webconfig`).  
-   To update the volcano list, go to `/var/www/webconfig` and run `make_volcdef_volcanoes_json.py` (without arguments). it reads Holocene*.xlsx and writes `volcanoes.json` into the current directory (alternatively: `make_volcdef_volcanoes_json.py /path/to/Holocene_Volcanoes_volcdef_cfg.xlsx --outdir /var/www/webconfig`)
+   The app prefers **`/var/www/webconfig/volcanoes_volcdef.json`**, then sibling `../webconfig/volcanoes_volcdef.json`, then `WEBCONFIG_DIR/volcanoes_volcdef.json` and `volcanoes.json`, then bundled `data/`. See `volcdef_web/app.py` (`get_volcanoes_json_path`).  
+   In production, `volcdef_web.conf` sets `SetEnv WEBCONFIG_DIR /var/www/webconfig`.  
+   To update the volcano list, run `make_volcdef_volcanoes_json.py` with `--outdir /var/www/webconfig` (or from that directory). Reload Apache after updating the JSON so WSGI reloads if you change code; JSON alone may require a process reload depending on setup.
 
 5. Run the website
 ```

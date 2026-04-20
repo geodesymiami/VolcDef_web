@@ -2,8 +2,43 @@
 
 {% block title %}Volcanoes List{% endblock %}
 
+{% block extra_styles %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+<style>
+/* One wrapper width — both tables share column geometry */
+.volcanoes-list-wrapper {
+  width: 90%;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.volcanoes-list-wrapper table.table {
+  width: 100%;
+  table-layout: fixed;
+}
+.volcanoes-list-wrapper col.col-name {
+  width: 55%;
+}
+.volcanoes-list-wrapper col.col-country {
+  width: 45%;
+}
+/* Landslides title lines up with the Name column */
+.volcanoes-list-landslides-caption {
+  caption-side: top;
+  text-align: left;
+  padding: 1.25rem 0 0.5rem 8px;
+}
+</style>
+{% endblock %}
+
 {% block content %}
+<div class="volcanoes-list-wrapper">
+{# Table 1: volcanoes only — sorting does not mix with landslides #}
 <table id="volcanoes-table" class="table">
+    <colgroup>
+        <col class="col-name">
+        <col class="col-country">
+    </colgroup>
     <thead>
         <tr>
             <th>Name</th>
@@ -20,18 +55,52 @@
     </tbody>
 </table>
 
-<!-- Include jQuery, Bootstrap JS, and DataTables JS -->
+{% if landslides|length > 0 %}
+<div class="volcanoes-list-landslides-section mt-4">
+    <table id="landslides-table" class="table">
+        <caption class="volcanoes-list-landslides-caption"><strong>Landslides</strong></caption>
+        <colgroup>
+            <col class="col-name">
+            <col class="col-country">
+        </colgroup>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Country</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for volcano in landslides %}
+                <tr>
+                    <td><a href="{{ volcano.volcdef_link }}">{{ volcano.name }}</a></td>
+                    <td>{{ volcano.country }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+</div>
+
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('#volcanoes-table').DataTable({
-            "paging": false,          // Disable pagination
-            "info": false,            // Disable info display
-            "searching": false,       // Disable search
-            "ordering": true,         // Enable ordering
-            "autoWidth": true        // Disable auto width adjustment
-        });
+        var dtOpts = {
+            paging: false,
+            info: false,
+            searching: false,
+            ordering: true,
+            orderClasses: true,
+            autoWidth: false,
+            columnDefs: [
+                { orderable: true, targets: [0, 1] }
+            ]
+        };
+        $('#volcanoes-table').DataTable(dtOpts);
+        if ($('#landslides-table').length) {
+            $('#landslides-table').DataTable(dtOpts);
+        }
     });
 </script>
 <div class="button-container">

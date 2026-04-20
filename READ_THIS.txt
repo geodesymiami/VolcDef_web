@@ -1,9 +1,10 @@
 To add new volcanoes make sure /var/www/webconfig is updated:
 
 1. on Mac: edit Holovcene_Volcanoes.xls in tools/webconfig
-2. run make_volcdef_volcanoes_json.py tp update volcanoes.json
+2. run make_volcdef_volcanoes_json.py to update volcanoes_volcdev.json
 3. git commit
 4. on jetstream:
 cd /var/www/webconfig
 git pull
 
+sudo systemctl restart apache2

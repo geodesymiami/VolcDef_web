@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify, abort
 import json
 import os
+import sys
 
 app = Flask(__name__)
 
@@ -59,34 +60,95 @@ MAPBOX_ACCESS_TOKEN = load_mapbox_token()
 
 VOLCDEF_WEB_HOME = os.getenv('VOLCDEF_WEB_HOME', os.path.dirname(__file__))
 
-# Find volcanoes.json: sibling webconfig (same parent as VolcDef_web), then WEBCONFIG_DIR, then bundled data
+# Primary data file name for VolcDef web (Holocene list + volcdef fields).
+_VOLCDEF_JSON = 'volcanoes_volcdef.json'
+
+
 def get_volcanoes_json_path():
-    # Sibling webconfig dir (webconfig and VolcDef_web share the same parent)
-    parent_of_volcdef = os.path.dirname(APP_DIR)
-    shared_parent = os.path.dirname(parent_of_volcdef)
-    sibling_webconfig = os.path.join(shared_parent, 'webconfig')
-    sibling_json = os.path.join(sibling_webconfig, 'volcanoes.json')
-    if os.path.exists(sibling_json):
-        return sibling_json
+    """Resolve path to volcano JSON.
+
+    1. Production: /var/www/webconfig/volcanoes_volcdef.json
+    2. Dev / repo layout: realpath(../webconfig/volcanoes_volcdef.json) relative to the VolcDef_web
+       install root (parent of ``volcdef_web/``), e.g.
+       .../minsar/tools/webconfig/volcanoes_volcdef.json when VolcDef_web lives under .../tools/VolcDef_web.
+    3. $WEBCONFIG_DIR/volcanoes_volcdef.json if set.
+    4. Bundled data under this package.
+    """
+    prod = os.path.join('/var/www/webconfig', _VOLCDEF_JSON)
+    if os.path.isfile(prod):
+        return prod
+
+    # VolcDef_web repo root = directory that contains volcdef_web/ (e.g. .../VolcDef_web)
+    volcdef_web_root = os.path.dirname(APP_DIR)
+    # ../webconfig/volcanoes_volcdef.json from that root (sibling webconfig next to VolcDef_web)
+    sibling_volcdef = os.path.join(
+        os.path.dirname(volcdef_web_root), 'webconfig', _VOLCDEF_JSON
+    )
+    sibling_resolved = os.path.realpath(sibling_volcdef)
+    if os.path.isfile(sibling_resolved):
+        return sibling_resolved
+
     webconfig_dir = os.getenv('WEBCONFIG_DIR')
     if webconfig_dir:
-        path = os.path.join(webconfig_dir, 'volcanoes.json')
-        if os.path.exists(path):
+        path = os.path.join(webconfig_dir, _VOLCDEF_JSON)
+        if os.path.isfile(path):
             return path
-    # Bundled data: volcanoes.json or fallback to volcanoes_volcdef.json
+        path_json = os.path.join(webconfig_dir, 'volcanoes.json')
+        if os.path.isfile(path_json):
+            return path_json
+
     bundled = os.path.join(VOLCDEF_WEB_HOME, 'data', 'volcanoes.json')
-    if os.path.exists(bundled):
+    if os.path.isfile(bundled):
         return bundled
-    return os.path.join(VOLCDEF_WEB_HOME, 'data', 'volcanoes_volcdef.json')
+    return os.path.join(VOLCDEF_WEB_HOME, 'data', _VOLCDEF_JSON)
+
+
+def _is_bundled_sample_path(path):
+    """True if path is the small packaged data/volcanoes_volcdef.json (not /var/www/webconfig)."""
+    try:
+        return os.path.samefile(
+            path,
+            os.path.join(VOLCDEF_WEB_HOME, 'data', _VOLCDEF_JSON),
+        )
+    except OSError:
+        return False
 
 @app.route('/')
 def index():
     return render_template('index.html', mapbox_access_token=MAPBOX_ACCESS_TOKEN)
 
-# Load volcano data from determined path
-volcanoes_json_path = get_volcanoes_json_path()
+# Load volcano data from determined path (at import time; restart WSGI after editing JSON)
+volcanoes_json_path = os.path.abspath(get_volcanoes_json_path())
 with open(volcanoes_json_path) as f:
     volcanoes = _sort_volcanoes_for_display(json.load(f)["volcanoes"])
+
+VOLCANOES_COUNT = len(volcanoes)
+_msg = (
+    f"[VolcDef_web] Loaded {VOLCANOES_COUNT} volcanoes from {volcanoes_json_path}"
+)
+print(_msg, file=sys.stderr)
+
+_webconfig = os.getenv("WEBCONFIG_DIR")
+if _webconfig and _is_bundled_sample_path(volcanoes_json_path):
+    _expected = os.path.join(_webconfig, _VOLCDEF_JSON)
+    print(
+        "[VolcDef_web] WARNING: WEBCONFIG_DIR is set but the bundled sample "
+        f"({VOLCANOES_COUNT} entries) is being used. Deploy and chmod "
+        f"so the WSGI user can read: {_expected}",
+        file=sys.stderr,
+    )
+
+@app.route('/api/data_source')
+def data_source():
+    """Ops: which JSON file the app loaded and how many volcanoes (verify vs /var/www/webconfig)."""
+    return jsonify(
+        {
+            "volcanoes_json_path": volcanoes_json_path,
+            "volcanoes_count": VOLCANOES_COUNT,
+            "webconfig_dir": os.getenv("WEBCONFIG_DIR"),
+            "using_bundled_sample": _is_bundled_sample_path(volcanoes_json_path),
+        }
+    )
 
 @app.route('/api/volcanoes')
 def get_volcanoes():
@@ -94,9 +156,14 @@ def get_volcanoes():
 
 @app.route('/volcanoes')
 def volcanoes_list():
-    # Assuming `get_volcanoes` is a function that retrieves all volcano data
-
-    return render_template('volcanoes_list.html', volcanoes=volcanoes)
+    """Volcanoes first, then a separate block for landslides (see _is_landslide)."""
+    volcanoes_only = [v for v in volcanoes if not _is_landslide(v)]
+    landslides_only = [v for v in volcanoes if _is_landslide(v)]
+    return render_template(
+        'volcanoes_list.html',
+        volcanoes=volcanoes_only,
+        landslides=landslides_only,
+    )
 
 @app.route('/about')
 def about():
