@@ -47,11 +47,11 @@ python run.py
 ```
 6. Open Website at the given address (chrome/safari)
 ```
-127.0.0.1:5000
+127.0.0.1:5001
 ```
 or check using
 ```
-curl -s http://127.0.0.1:5000
+curl -s http://127.0.0.1:5001
 ```
 7. On a remote server, to configure Apache copy volcdef_web.conf to /etc/apache2/sites-available/ (`sudo cp volcdef_web.conf /etc/apache2/sites-available/`. It contains
 ```
