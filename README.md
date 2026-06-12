@@ -19,16 +19,20 @@ sudo systemctl reload apache2
 Or maintain `/var/www/VolcDef_web` as a `git clone` / `git pull` of [VolcDef_web](https://github.com/geodesymiami/VolcDef_web) and pull on the server after merging changes from the minsar copy.
 
 ## Installation
-1. Go to `/var/www/` and clone the repository:
+1. Go to `/var/www/` and clone the repository (on a new server you may need your private and public key in ~/.ssh for git to work)
 ```
 git clone git@github.com:geodesymiami/VolcDef_web
+git clone git@github.com:geodesymiami/webconfig
 ```
-(preferred), or if cloned into the $MINSAR_HOME/tools directory create a symbilic link:
+(preferred), or if cloned into the $MINSAR_HOME/tools directory create a symbolic link:
 ```
 sudo ln -s /home/exouser/code/minsar/tools/VolcDef_web /var/www
 ```
-2. In the VolcDef_web dir, install the required packages into a virtual environment:
+2. Install the required packages into a virtual environment (first adjust ownership:
 ```
+USER=insaradmin
+sudo chown -R $USER:$USER /var/www/VolcDef_web
+
 python -m venv web_env
 source web_env/bin/activate
 pip install -r requirements.txt
@@ -36,56 +40,24 @@ pip install -r requirements.txt
 3. Make sure the MAPBOX_ACCESS_TOKEN is set in `mapbox_access_token.env` (or `cp ~/accounts/mapbox_access_token.env .`).
 
 4. **Volcano list (production)**  
-   The app prefers **`/var/www/webconfig/volcanoes_volcdef.json`**, then sibling `../webconfig/volcanoes_volcdef.json`, then `WEBCONFIG_DIR/volcanoes_volcdef.json` and `volcanoes.json`, then bundled `data/`. See `volcdef_web/app.py` (`get_volcanoes_json_path`).  
-   In production, `volcdef_web.conf` sets `SetEnv WEBCONFIG_DIR /var/www/webconfig`.  
+   The app uses **`/var/www/webconfig/volcanoes_volcdef.json`**, then sibling `../webconfig/volcanoes_volcdef.json`, then `WEBCONFIG_DIR/volcanoes_volcdef.json`. See `volcdef_web/app.py` (`get_volcanoes_json_path`).  `SetEnv WEBCONFIG_DIR /var/www/webconfig` is set in`volcdef_web.conf`.
+   
    To update the volcano list, run `make_volcdef_volcanoes_json.py` with `--outdir /var/www/webconfig` (or from that directory). Reload Apache after updating the JSON so WSGI reloads if you change code; JSON alone may require a process reload depending on setup.
 
-5. Run the website
+6. Run the website
 ```
 cd volcdef_web/
 python run.py
 ```
-6. Open Website at the given address (chrome/safari)
-```
-127.0.0.1:5001
-```
-or check using
+6. Check whether website is running using
 ```
 curl -s http://127.0.0.1:5001
 ```
-7. On a remote server, to configure Apache copy volcdef_web.conf to /etc/apache2/sites-available/ (`sudo cp volcdef_web.conf /etc/apache2/sites-available/`. It contains
+or  open website at the given address (chrome/safari)
 ```
-<VirtualHost *:80>
-
-    # Alias directives must come BEFORE WSGIScriptAlias to prevent Flask from catching these URLs
-
-    # Serve /data/HDF5EOS/ as static files (bypass WSGI/Flask)
-    Alias /data/HDF5EOS/ /data/HDF5EOS/
-    <Directory /data/HDF5EOS/>
-        Options Indexes FollowSymLinks
-        Require all granted
-    </Directory>
-
-    # Serve /data/precip_plots/ as static files
-    Alias /data/precip_plots/ /data/precip_plots/
-    <Directory /data/precip_plots/>
-        Options Indexes FollowSymLinks
-        Require all granted
-    </Directory>
-
-    # Flask/WSGI configuration (must come AFTER Alias directives)
-    WSGIDaemonProcess precip_web python-home=/var/www/Precip_web/web_env python-path=/var/www/Precip_web
-    WSGIProcessGroup precip_web
-    WSGIScriptAlias / /var/www/Precip_web/web.wsgi
-
-    <Directory /var/www/Precip_web/>
-        Require all granted
-    </Directory>
-
-    ErrorLog ${APACHE_LOG_DIR}/precip_web_error.log
-    CustomLog ${APACHE_LOG_DIR}/precip_web_access.log combined
-</VirtualHost>
+127.0.0.1:5001
 ```
+7. On a remote server, to configure Apache copy volcdef_web.conf to /etc/apache2/sites-available/ (`sudo cp volcdef_web.conf /etc/apache2/sites-available/`)((Ubuntu) (use `volcdef_web.conf_jetstream` is /data/HDFEOS5 lives on server running Apache). 
 
 8. Start Apache using:
 ```
